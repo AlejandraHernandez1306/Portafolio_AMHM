@@ -1,4 +1,3 @@
-
 const SecurityUtils = {
     sanitizeInput(input) {
         const div = document.createElement('div');
@@ -10,12 +9,6 @@ const SecurityUtils = {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return re.test(email);
     },
-
-    validatePhone(phone) {
-        const re = /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/;
-        return re.test(phone);
-    },
-
 
     rateLimiter: {
         attempts: {},
@@ -61,18 +54,21 @@ class PageLoader {
     }
 
     init() {
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                this.hide();
-            }, 500);
-        });
+        // Corrección: Asegura ocultar el Loader independientemente de cómo responda el DOM
+        if (document.readyState === 'complete') {
+            this.hide();
+        } else {
+            window.addEventListener('load', () => this.hide());
+        }
     }
 
     hide() {
-        this.loader.classList.add('hidden');
-        setTimeout(() => {
-            this.loader.style.display = 'none';
-        }, 500);
+        if (this.loader) {
+            this.loader.classList.add('hidden');
+            setTimeout(() => {
+                this.loader.style.display = 'none';
+            }, 500);
+        }
     }
 }
 
@@ -84,7 +80,7 @@ class CustomCursor {
     }
 
     init() {
-        if (window.innerWidth <= 768) return;
+        if (window.innerWidth <= 768 || !this.cursor || !this.follower) return;
 
         document.addEventListener('mousemove', (e) => {
             this.cursor.style.left = e.clientX + 'px';
@@ -129,22 +125,19 @@ class Navigation {
     }
 
     handleScroll() {
-        let lastScroll = 0;
-        
         window.addEventListener('scroll', () => {
-            const currentScroll = window.pageYOffset;
-            
-            if (currentScroll > 100) {
-                this.navbar.classList.add('scrolled');
-            } else {
-                this.navbar.classList.remove('scrolled');
+            if (this.navbar) {
+                if (window.pageYOffset > 100) {
+                    this.navbar.classList.add('scrolled');
+                } else {
+                    this.navbar.classList.remove('scrolled');
+                }
             }
-            
-            lastScroll = currentScroll;
         });
     }
 
     handleHamburger() {
+        if (!this.hamburger || !this.navMenu) return;
         this.hamburger.addEventListener('click', () => {
             this.hamburger.classList.toggle('active');
             this.navMenu.classList.toggle('active');
@@ -155,21 +148,25 @@ class Navigation {
     handleNavLinks() {
         this.navLinks.forEach(link => {
             link.addEventListener('click', (e) => {
-                e.preventDefault();
                 const targetId = link.getAttribute('href');
-                const targetSection = document.querySelector(targetId);
-                
-                if (targetSection) {
-                    const offsetTop = targetSection.offsetTop - CONFIG.scrollOffset;
-                    window.scrollTo({
-                        top: offsetTop,
-                        behavior: 'smooth'
-                    });
+                if (targetId && targetId.startsWith('#')) {
+                    e.preventDefault();
+                    const targetSection = document.querySelector(targetId);
+                    
+                    if (targetSection) {
+                        const offsetTop = targetSection.offsetTop - CONFIG.scrollOffset;
+                        window.scrollTo({
+                            top: offsetTop,
+                            behavior: 'smooth'
+                        });
+                    }
+                    
+                    if (this.hamburger && this.navMenu) {
+                        this.hamburger.classList.remove('active');
+                        this.navMenu.classList.remove('active');
+                        document.body.style.overflow = '';
+                    }
                 }
-                
-                this.hamburger.classList.remove('active');
-                this.navMenu.classList.remove('active');
-                document.body.style.overflow = '';
             });
         });
     }
@@ -181,8 +178,6 @@ class Navigation {
             
             sections.forEach(section => {
                 const sectionTop = section.offsetTop;
-                const sectionHeight = section.clientHeight;
-                
                 if (window.pageYOffset >= sectionTop - CONFIG.scrollOffset - 100) {
                     current = section.getAttribute('id');
                 }
@@ -198,7 +193,6 @@ class Navigation {
     }
 }
 
-
 class ThemeToggle {
     constructor() {
         this.themeToggle = document.getElementById('themeToggle');
@@ -206,7 +200,7 @@ class ThemeToggle {
     }
 
     init() {
-
+        if (!this.themeToggle) return;
         const savedTheme = localStorage.getItem('theme') || 'light';
         this.setTheme(savedTheme);
         
@@ -222,19 +216,19 @@ class ThemeToggle {
         localStorage.setItem('theme', theme);
         
         const icon = this.themeToggle.querySelector('i');
-        icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        if (icon) {
+            icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        }
     }
 }
-
 
 class TypeWriter {
     constructor() {
         this.element = document.querySelector('.typing-text');
         this.texts = [
+            'Técnico en Ingeniería en Computación',
             'Desarrolladora Full Stack',
-            'Oracle Cloud Certified',
-            'Apasionada por la Tecnología',
-            'Creadora de Experiencias Digitales'
+            'Oracle Cloud Certified Associate'
         ];
         this.textIndex = 0;
         this.charIndex = 0;
@@ -452,13 +446,6 @@ class ContactForm {
             return;
         }
 
-        const formData = new FormData(this.form);
-        const data = {};
-        
-        formData.forEach((value, key) => {
-            data[key] = SecurityUtils.sanitizeInput(value);
-        });
-        
         let isValid = true;
         const inputs = this.form.querySelectorAll('input, textarea');
         inputs.forEach(input => {
@@ -472,48 +459,33 @@ class ContactForm {
             return;
         }
 
-        if (!SecurityUtils.validateEmail(data.email)) {
-            this.showStatus('Por favor, ingresa un email válido.', 'error');
-            return;
-        }
-        
         this.showStatus('Enviando mensaje...', 'success');
-        
-        setTimeout(() => {
-            this.showStatus('¡Mensaje enviado con éxito! Te responderé pronto.', 'success');
-            this.form.reset();
-            
-            inputs.forEach(input => {
-                input.style.borderColor = 'var(--bg-tertiary)';
-            });
-        }, 1500);
-        
-        // En producción, descomentar y usar:
-        /*
+
+        // ENVÍO DE DATOS REALES MEDIANTE ASYNC FETCH A FORMSPREE
+        const formData = new FormData(this.form);
         try {
-            const response = await fetch('/api/contact', {
+            const response = await fetch(this.form.action, {
                 method: 'POST',
+                body: formData,
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify(data)
+                    'Accept': 'application/json'
+                }
             });
             
             if (response.ok) {
-                this.showStatus('¡Mensaje enviado con éxito!', 'success');
+                this.showStatus('¡Mensaje enviado con éxito! Te responderé lo antes posible.', 'success');
                 this.form.reset();
+                inputs.forEach(input => input.style.borderColor = 'var(--bg-tertiary)');
             } else {
-                throw new Error('Error en el envío');
+                this.showStatus('Ocurrió un error al procesar el envío. Revisa el ID del formulario.', 'error');
             }
         } catch (error) {
-            this.showStatus('Error al enviar el mensaje. Intenta nuevamente.', 'error');
-            console.error('Error:', error);
+            this.showStatus('Error de red. Asegúrate de estar conectado a internet.', 'error');
         }
-        */
     }
 
     showStatus(message, type) {
+        if (!this.status) return;
         this.status.textContent = message;
         this.status.className = `form-status ${type}`;
         
@@ -531,7 +503,6 @@ class Newsletter {
 
     init() {
         if (!this.form) return;
-        
         this.form.addEventListener('submit', (e) => {
             e.preventDefault();
             this.handleSubmit();
@@ -540,21 +511,15 @@ class Newsletter {
 
     handleSubmit() {
         const input = this.form.querySelector('input');
-        const email = SecurityUtils.sanitizeInput(input.value.trim());
-        
-        if (!SecurityUtils.validateEmail(email)) {
-            alert('Por favor, ingresa un email válido.');
-            return;
+        if (input) {
+            const email = SecurityUtils.sanitizeInput(input.value.trim());
+            if (!SecurityUtils.validateEmail(email)) {
+                alert('Por favor, ingresa un email válido.');
+                return;
+            }
+            alert('¡Gracias por tu interés! Te mantendré al tanto de mis actualizaciones profesionales.');
+            input.value = '';
         }
-        
-        if (!SecurityUtils.rateLimiter.isAllowed('newsletter', 2, 600000)) {
-            alert('Has excedido el límite de suscripciones.');
-            return;
-        }
-        
-        alert('¡Gracias por suscribirte! Recibirás actualizaciones pronto.');
-        input.value = '';
-        
     }
 }
 
@@ -596,76 +561,10 @@ class SecurityEnhancements {
                 return false;
             });
         });
-
-        
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'F12' || 
-                (e.ctrlKey && e.shiftKey && e.key === 'I') ||
-                (e.ctrlKey && e.shiftKey && e.key === 'C') ||
-                (e.ctrlKey && e.key === 'u')) {
-                e.preventDefault();
-                return false;
-            }
-        });
-        
-        // Content Security Policy headers
-        // Esto debe configurarse en el servidor, pero se documenta aquí:
-        /*
-        Content-Security-Policy: 
-            default-src 'self'; 
-            script-src 'self' https://cdnjs.cloudflare.com; 
-            style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; 
-            font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com;
-            img-src 'self' data: https:;
-            connect-src 'self';
-        */
-    }
-}
-
-class PerformanceOptimizer {
-    constructor() {
-        this.init();
-    }
-
-    init() {
-        this.lazyLoadImages();
-        
-        this.optimizeScrollEvents();
-    }
-
-    lazyLoadImages() {
-        const images = document.querySelectorAll('img[data-src]');
-        
-        const imageObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const img = entry.target;
-                    img.src = img.dataset.src;
-                    img.removeAttribute('data-src');
-                    imageObserver.unobserve(img);
-                }
-            });
-        });
-        
-        images.forEach(img => imageObserver.observe(img));
-    }
-
-    optimizeScrollEvents() {
-        let ticking = false;
-        
-        window.addEventListener('scroll', () => {
-            if (!ticking) {
-                window.requestAnimationFrame(() => {
-                    ticking = false;
-                });
-                ticking = true;
-            }
-        });
     }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-
     new PageLoader();
     new CustomCursor();
     new Navigation();
@@ -677,22 +576,6 @@ document.addEventListener('DOMContentLoaded', () => {
     new Newsletter();
     new BackToTop();
     new SecurityEnhancements();
-    new PerformanceOptimizer();
     
-    console.log('%c¡Hola! 👋', 'font-size: 20px; font-weight: bold; color: #6366f1;');
-    console.log('%c¿Interesado en el código? Visita mi GitHub:', 'font-size: 14px; color: #64748b;');
-    console.log('%chttps://github.com/alejandrahernandez', 'font-size: 14px; color: #14b8a6;');
-});
-
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-    });
-}
-
-window.addEventListener('error', (e) => {
-    console.error('Error capturado:', e.error);
-});
-
-window.addEventListener('unhandledrejection', (e) => {
-    console.error('Promise rechazada:', e.reason);
+    console.log('%c¡Hola Reclutador! 👋', 'font-size: 16px; font-weight: bold; color: #6366f1;');
 });

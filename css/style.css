@@ -1681,6 +1681,33 @@ body {
     outline-offset: 2px;
 }
 
+/* ===================================
+   ESTILOS DE MENSAJES DE ERROR/ÉXITO
+   =================================== */
+.form-status {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 12px;
+    text-align: center;
+    font-weight: 600;
+    display: none;
+    transition: all var(--transition-base);
+}
+
+.form-status.success {
+    display: block;
+    background: rgba(20, 184, 166, 0.1);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+}
+
+.form-status.error {
+    display: block;
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid #ef4444;
+}
+
 @media print {
     .navbar,
     .hamburger,
