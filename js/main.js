@@ -54,7 +54,6 @@ class PageLoader {
     }
 
     init() {
-        // Corrección: Asegura ocultar el Loader independientemente de cómo responda el DOM
         if (document.readyState === 'complete') {
             this.hide();
         } else {
@@ -461,7 +460,6 @@ class ContactForm {
 
         this.showStatus('Enviando mensaje...', 'success');
 
-        // ENVÍO DE DATOS REALES MEDIANTE ASYNC FETCH A FORMSPREE
         const formData = new FormData(this.form);
         try {
             const response = await fetch(this.form.action, {
@@ -477,7 +475,7 @@ class ContactForm {
                 this.form.reset();
                 inputs.forEach(input => input.style.borderColor = 'var(--bg-tertiary)');
             } else {
-                this.showStatus('Ocurrió un error al procesar el envío. Revisa el ID del formulario.', 'error');
+                this.showStatus('Ocurrió un error al procesar el envío. Revisa tu ID de Formspree.', 'error');
             }
         } catch (error) {
             this.showStatus('Error de red. Asegúrate de estar conectado a internet.', 'error');
