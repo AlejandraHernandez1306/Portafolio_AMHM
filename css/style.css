@@ -1681,6 +1681,28 @@ body {
     outline-offset: 2px;
 }
 
+@media print {
+    .navbar,
+    .hamburger,
+    .theme-toggle,
+    .scroll-indicator,
+    .back-to-top,
+    .floating-card,
+    .gradient-orb,
+    .footer {
+        display: none !important;
+    }
+    
+    body {
+        background: white;
+        color: black;
+    }
+    
+    .section {
+        page-break-inside: avoid;
+    }
+}
+
 /* ===================================
    ESTILOS DE MENSAJES DE ERROR/ÉXITO
    =================================== */
