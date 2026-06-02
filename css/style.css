@@ -1681,28 +1681,6 @@ body {
     outline-offset: 2px;
 }
 
-@media print {
-    .navbar,
-    .hamburger,
-    .theme-toggle,
-    .scroll-indicator,
-    .back-to-top,
-    .floating-card,
-    .gradient-orb,
-    .footer {
-        display: none !important;
-    }
-    
-    body {
-        background: white;
-        color: black;
-    }
-    
-    .section {
-        page-break-inside: avoid;
-    }
-}
-
 /* ===================================
    ESTILOS DE MENSAJES DE ERROR/ÉXITO
    =================================== */
@@ -1728,4 +1706,26 @@ body {
     background: rgba(239, 68, 68, 0.1);
     color: #ef4444;
     border: 1px solid #ef4444;
+}
+
+@media print {
+    .navbar,
+    .hamburger,
+    .theme-toggle,
+    .scroll-indicator,
+    .back-to-top,
+    .floating-card,
+    .gradient-orb,
+    .footer {
+        display: none !important;
     }
+    
+    body {
+        background: white;
+        color: black;
+    }
+    
+    .section {
+        page-break-inside: avoid;
+    }
+}
